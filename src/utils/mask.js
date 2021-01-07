@@ -225,13 +225,22 @@ export default class MaskUtils {
   processChange = (currentState, previousState) => {
     const { mask, prefix, lastEditablePosition } = this.maskOptions;
     const { value, selection } = currentState;
-    const previousValue = previousState.value;
-    const previousSelection = previousState.selection;
+    let previousValue = previousState.value;
+    let previousSelection = previousState.selection;
     let newValue = value;
     let enteredString = "";
     let formattedEnteredStringLength = 0;
     let removedLength = 0;
     let cursorPosition = Math.min(previousSelection.start, selection.start);
+
+    const isAutoFilled =
+      previousSelection.end < previousValue.length &&
+      selection.end === value.length;
+
+    if (isAutoFilled) {
+      previousValue = "";
+      previousSelection = { start: 0, end: 0, length: 0 };
+    }
 
     if (selection.end > previousSelection.start) {
       enteredString = newValue.slice(previousSelection.start, selection.end);
