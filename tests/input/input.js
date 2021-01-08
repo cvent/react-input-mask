@@ -563,6 +563,8 @@ describe("react-input-mask", () => {
     await simulateBackspacePress(input);
     expect(input.value).to.equal("+7 (495) 156 45 4");
 
+    await setCursorPosition(input, 17);
+
     input.value = "+7 (";
     setCursorPosition(input, 4);
     TestUtils.Simulate.change(input);
@@ -1237,6 +1239,23 @@ describe("react-input-mask", () => {
     TestUtils.Simulate.change(input);
 
     expect(input.value).to.equal("1234-5678");
+  });
+
+  it("should handle autofill when there is a prefix and no mask placeholder", async () => {
+    const { input } = createInput(
+      <Input mask="(9999-9999)" defaultValue="(" maskPlaceholder={null} />
+    );
+    await simulateFocus(input);
+
+    setCursorPosition(input, 1);
+    TestUtils.Simulate.change(input);
+    expect(input.value).to.equal("(");
+
+    input.value = "12345678";
+    setCursorPosition(input, 8);
+    TestUtils.Simulate.change(input);
+
+    expect(input.value).to.equal("(1234-5678)");
   });
 
   it("should handle transition between masked and non-masked state", async () => {

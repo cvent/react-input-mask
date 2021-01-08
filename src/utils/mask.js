@@ -226,6 +226,7 @@ export default class MaskUtils {
     { value, selection },
     { value: previousValue, selection: previousSelection }
   ) => {
+    const { maskPlaceholder } = this.maskOptions;
     if (
       // Autocomplete will set the previous selection to the length of the autocompleted value
       previousSelection.end < previousValue.length &&
@@ -243,9 +244,26 @@ export default class MaskUtils {
       // When both previous and current state have no selection length, the cursor index is less than it was before
       // and the cursor is at the end of the new value
       // Check each character to see if there are any changes which is only possible if the value was autocompleted.
-      return value
-        .split("")
-        .some((char, index) => char !== previousValue[index]);
+      return value.split("").some((char, index) => {
+        return char !== previousValue[index];
+      });
+    }
+
+    if (
+      !maskPlaceholder &&
+      previousSelection.length === 0 &&
+      previousValue.length < value.length
+    ) {
+      // If there is no mask placeholder, the selection is 0 and the new value is longer than the previous value
+      // (characters have been added)
+      return value.split("").some((char, index) => {
+        // Check each character before the selection to see if they have changed
+        if (index < previousSelection.start) {
+          // Any character before the previous selection that changes will be changed because of autofill
+          return char !== previousValue[index];
+        }
+        return false;
+      });
     }
 
     return false;
@@ -264,8 +282,12 @@ export default class MaskUtils {
 
     if (this.isAutoFilled(currentState, previousState)) {
       // If the value is autocompleted treat it as if the input started empty.
-      previousValue = "";
-      previousSelection = { start: 0, end: 0, length: 0 };
+      previousValue = prefix;
+      previousSelection = {
+        start: 0,
+        end: 0,
+        length: 0
+      };
     }
 
     if (selection.end > previousSelection.start) {
