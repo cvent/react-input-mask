@@ -222,6 +222,35 @@ export default class MaskUtils {
     return value;
   };
 
+  isAutoFilled = (
+    { value, selection },
+    { value: previousValue, selection: previousSelection }
+  ) => {
+    if (
+      // Autocomplete will set the previous selection to the length of the autocompleted value
+      previousSelection.end < previousValue.length &&
+      selection.end === value.length
+    ) {
+      return true;
+    }
+
+    if (
+      selection.length === 0 &&
+      previousSelection.length === 0 &&
+      selection.start < previousSelection.start &&
+      selection.start === value.length
+    ) {
+      // When both previous and current state have no selection length, the cursor index is less than it was before
+      // and the cursor is at the end of the new value
+      // Check each character to see if there are any changes which is only possible if the value was autocompleted.
+      return value
+        .split("")
+        .some((char, index) => char !== previousValue[index]);
+    }
+
+    return false;
+  };
+
   processChange = (currentState, previousState) => {
     const { mask, prefix, lastEditablePosition } = this.maskOptions;
     const { value, selection } = currentState;
@@ -233,11 +262,8 @@ export default class MaskUtils {
     let removedLength = 0;
     let cursorPosition = Math.min(previousSelection.start, selection.start);
 
-    const isAutoFilled =
-      previousSelection.end < previousValue.length &&
-      selection.end === value.length;
-
-    if (isAutoFilled) {
+    if (this.isAutoFilled(currentState, previousState)) {
+      // If the value is autocompleted treat it as if the input started empty.
       previousValue = "";
       previousSelection = { start: 0, end: 0, length: 0 };
     }
@@ -257,7 +283,14 @@ export default class MaskUtils {
       removedLength = previousValue.length - newValue.length;
     }
 
-    newValue = previousValue;
+    if (
+      !(
+        newValue.length === previousValue.length &&
+        selection.end === previousSelection.start
+      )
+    ) {
+      newValue = previousValue;
+    }
 
     if (removedLength) {
       if (removedLength === 1 && !previousSelection.length) {

@@ -1162,9 +1162,73 @@ describe("react-input-mask", () => {
     expect(input.value).to.equal("1234");
   });
 
-  it("should handle autofill", async () => {
+  it("should handle autofill with no maskPlaceholder", async () => {
     const { input } = createInput(
       <Input mask="9999-9999" defaultValue="123" maskPlaceholder={null} />
+    );
+    await simulateFocus(input);
+    setCursorPosition(input, 3);
+    TestUtils.Simulate.change(input);
+
+    input.value = "12345678";
+    setCursorPosition(input, 8);
+    TestUtils.Simulate.change(input);
+
+    expect(input.value).to.equal("1234-5678");
+  });
+
+  it("should handle autofill with default maskPlaceholder", async () => {
+    const { input } = createInput(
+      <Input mask="9999-9999" defaultValue="123" />
+    );
+    await simulateFocus(input);
+    setCursorPosition(input, 9);
+    TestUtils.Simulate.change(input);
+
+    input.value = "12345678";
+    setCursorPosition(input, 8);
+    TestUtils.Simulate.change(input);
+
+    expect(input.value).to.equal("1234-5678");
+  });
+
+  it("should handle autofill with full length maskPlaceholder", async () => {
+    const { input } = createInput(
+      <Input mask="9999-9999" defaultValue="123" maskPlaceholder="####-####" />
+    );
+    await simulateFocus(input);
+    setCursorPosition(input, 9);
+    TestUtils.Simulate.change(input);
+
+    input.value = "12345678";
+    setCursorPosition(input, 8);
+    TestUtils.Simulate.change(input);
+
+    expect(input.value).to.equal("1234-5678");
+  });
+
+  it("should handle autofill a fully masked value", async () => {
+    // This handles a case where chrome will autofill this field then move to another auto fill field and then come back
+    // and fill this field again.
+    const { input } = createInput(
+      <Input mask="9999-9999" defaultValue="____-____" />
+    );
+    await simulateFocus(input);
+    setCursorPosition(input, 9);
+    TestUtils.Simulate.change(input);
+
+    input.value = "12345678";
+    setCursorPosition(input, 8);
+    TestUtils.Simulate.change(input);
+
+    expect(input.value).to.equal("1234-5678");
+  });
+
+  it("should handle autofill an existing value", async () => {
+    // This handles a case where chrome will autofill this field then move to another auto fill field and then come back
+    // and fill this field again.
+    const { input } = createInput(
+      <Input mask="9999-9999" defaultValue="1234-5678" />
     );
     await simulateFocus(input);
 
